@@ -173,7 +173,7 @@ namespace uCSV
 	template<typename... Types>
 	constexpr void deserialize(Deserializer& data, std::tuple<Types...>& target)
 	{
-		return Detail::deserializeTupleHelper(data, target, std::index_sequence_for<Types...>{});
+		return Detail::deserializeTupleHelper(data, target, std::index_sequence_for<Types...>());
 	}
 
 	template<typename... T>
@@ -313,27 +313,29 @@ namespace uCSV
 		}
 	};
 
-	inline constexpr std::true_type readHeader;
-	inline constexpr std::false_type ignoreHeader;
+	using DefaultDelimiter = Delimiter<','>;
 
-	template<typename InputIteratorFirstType, typename InputIteratorLastType>
-	[[nodiscard]] constexpr bool needsEscaping(InputIteratorFirstType first, InputIteratorLastType last)
-	{
-		return std::any_of(first, last, [](char_t c) constexpr noexcept { return c == '\r' || c == '\n' || c == '"' || c == ','; });
-	}
 	template<typename InputIteratorFirstType, typename InputIteratorLastType, typename DelimiterMatcherT>
 	[[nodiscard]] constexpr bool needsEscaping(InputIteratorFirstType first, InputIteratorLastType last, DelimiterMatcherT const& delimiterMatcher)
 	{
-		return std::any_of(first, last, [&delimiterMatcher](char_t c) constexpr noexcept { return c == '\r' || c == '\n' || c == '"' || delimiterMatcher(c); });
+		return std::any_of(first, last, [&delimiterMatcher](char_t c) constexpr noexcept { return isNewline(c) || c == '"' || delimiterMatcher(c); });
+	}
+	template<typename InputIteratorFirstType, typename InputIteratorLastType>
+	[[nodiscard]] constexpr bool needsEscaping(InputIteratorFirstType first, InputIteratorLastType last)
+	{
+		return needsEscaping<InputIteratorFirstType, InputIteratorLastType>(std::move(first), std::move(last), DefaultDelimiter());
 	}
 
 	// TODO: escape
 	// TODO: unescape
 
+	inline constexpr std::true_type readHeader;
+	inline constexpr std::false_type ignoreHeader;
+
 	template<
 		typename InputIteratorBeginT,
 		typename ErrorHandlerT = ErrorIgnore,
-		typename DelimiterMatcherT = Delimiter<','>,
+		typename DelimiterMatcherT = DefaultDelimiter,
 		typename InputIteratorEndT = InputIteratorBeginT
 	>
 	class Reader
@@ -692,7 +694,7 @@ namespace uCSV
 			std::decay_t<U>,
 			ErrorIgnore
 		>,
-		Delimiter<','>,
+		DefaultDelimiter,
 		std::conditional_t<
 			std::is_base_of_v<std::istream, std::decay_t<T>>,
 			std::istreambuf_iterator<uCSV::char_t>,
@@ -714,7 +716,7 @@ namespace uCSV
 		std::conditional_t<
 			std::is_base_of_v<std::istream, std::decay_t<T>>,
 			std::decay_t<V>,
-			Delimiter<','>
+			DefaultDelimiter
 		>,
 		std::conditional_t<
 			std::is_base_of_v<std::istream, std::decay_t<T>>,
