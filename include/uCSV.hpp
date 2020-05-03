@@ -325,8 +325,50 @@ namespace uCSV
 	{
 		return needsEscaping<InputIteratorFirstType, InputIteratorLastType>(std::move(first), std::move(last), DefaultDelimiter());
 	}
+	template<typename ContainerType>
+	[[nodiscard]] constexpr bool needsEscaping(ContainerType const& container)
+	{
+		using std::begin, std::end;
+		return needsEscaping(begin(container), end(container));
+	}
 
-	// TODO: escape
+	template<typename InputIteratorFirstType, typename InputIteratorLastType, typename OutputIteratorType>
+	constexpr OutputIteratorType escape(InputIteratorFirstType first, InputIteratorLastType last, OutputIteratorType out)
+	{
+		*out++ = '"';
+		while(first != last)
+		{
+			decltype(auto) c = *first++;
+			if(!static_cast<bool>(c))
+				break;
+			if(c == '"')
+				*out++ = '"';
+			*out++ = c;
+		}
+		*out++ = '"';
+		return out;
+	}
+	template<typename ContainerType, typename OutputIteratorType>
+	constexpr OutputIteratorType escape(ContainerType const& container, OutputIteratorType out)
+	{
+		using std::begin, std::end;
+		return escape(begin(container), end(container), out);
+	}
+
+	template<typename InputIteratorFirstType, typename InputIteratorLastType>
+	string_t escapeToStr(InputIteratorFirstType first, InputIteratorLastType last)
+	{
+		string_t result;
+		escape<InputIteratorFirstType, InputIteratorLastType>(std::move(first), std::move(last), std::back_inserter(result));
+		return result;
+	}
+	template<typename ContainerType>
+	string_t escapeToStr(ContainerType const& container)
+	{
+		using std::begin, std::end;
+		return escapeToStr(begin(container), end(container));
+	}
+
 	// TODO: unescape
 
 	inline constexpr std::true_type readHeader;
