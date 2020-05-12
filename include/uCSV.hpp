@@ -356,14 +356,14 @@ namespace uCSV
 	}
 
 	template<typename InputIteratorFirstType, typename InputIteratorLastType>
-	string_t escapeToStr(InputIteratorFirstType first, InputIteratorLastType last)
+	[[nodiscard]] string_t escapeToStr(InputIteratorFirstType first, InputIteratorLastType last)
 	{
 		string_t result;
 		escape<InputIteratorFirstType, InputIteratorLastType>(std::move(first), std::move(last), std::back_inserter(result));
 		return result;
 	}
 	template<typename ContainerType>
-	string_t escapeToStr(ContainerType const& container)
+	[[nodiscard]] string_t escapeToStr(ContainerType const& container)
 	{
 		using std::begin, std::end;
 		return escapeToStr(begin(container), end(container));
