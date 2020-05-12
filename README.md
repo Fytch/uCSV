@@ -73,7 +73,9 @@ int main()
 	{
 		int id;
 		foo::vec3 p, v;
-		auto des = reader2.fetch();
+		std::optional<uCSV::Deserializer> des = reader2.fetch();
+		if(!des)
+			break;
 		uCSV::deserializeMany(*des, id, p, v);
 		ids.push_back(id);
 		positions.emplace_back(std::move(p));
