@@ -472,7 +472,22 @@ namespace uCSV
 		{
 			return mRows;
 		}
-		std::optional<Deserializer> fetch()
+		bool discard()
+		{
+			return skipLine();
+		}
+		bool discard(std::size_t n)
+		{
+			for(bool result = true;;)
+			{
+				if(n-- == 0)
+					return result;
+				if(done())
+					return false;
+				result &= discard();
+			}
+		}
+		[[nodiscard]] std::optional<Deserializer> fetch()
 		{
 			if(readLine())
 				return Deserializer(columns(), mHeader.data(), mRowCells.data());
@@ -632,6 +647,11 @@ namespace uCSV
 				++columns;
 			}
 			return true;
+		}
+		bool skipLine()
+		{
+			// TODO: can be optimized; dont store the line and dont store the views
+			return readLine();
 		}
 		bool readLine()
 		{
